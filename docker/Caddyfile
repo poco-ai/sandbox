@@ -10,4 +10,8 @@
     handle /devtools/* {
         reverse_proxy 127.0.0.1:9222
     }
+
+    handle /code/* {
+        reverse_proxy 127.0.0.1:8443
+    }
 }

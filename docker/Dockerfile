@@ -36,7 +36,9 @@ RUN mkdir -p /etc/apt/keyrings \
     && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
-ENV DISPLAY=:99
+ENV DISPLAY=:1
+
+RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 RUN mkdir -p /etc/supervisor/conf.d
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
