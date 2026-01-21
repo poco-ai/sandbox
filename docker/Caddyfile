@@ -1,0 +1,13 @@
+:8080 {
+    handle_path /vnc/* {
+        reverse_proxy 127.0.0.1:6080
+    }
+
+    handle_path /cdp/* {
+        reverse_proxy 127.0.0.1:9222
+    }
+
+    handle /devtools/* {
+        reverse_proxy 127.0.0.1:9222
+    }
+}
