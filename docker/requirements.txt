@@ -1,0 +1,64 @@
+# HTTP & API
+requests
+httpx
+aiohttp
+
+# Web automation
+playwright
+
+# Data processing
+pandas
+numpy
+
+# Scientific computing
+scipy
+
+# Visualization
+matplotlib
+seaborn
+plotly
+
+# Office files - Excel/Word/PPT
+openpyxl
+python-docx
+python-pptx
+
+# PDF processing
+pypdf
+pdfplumber
+pymupdf
+
+# HTML processing
+beautifulsoup4
+lxml
+
+# Image processing
+pillow
+opencv-python
+
+# Audio/Video processing
+moviepy
+pydub
+ffmpeg-python
+
+# AWS
+boto3
+
+# Database
+duckdb
+sqlalchemy
+
+# Finance
+yfinance
+
+# Utilities
+python-dotenv
+pydantic
+tqdm
+
+# Jupyter
+jupyterlab
+ipykernel
+
+# Async
+asyncio-throttle
