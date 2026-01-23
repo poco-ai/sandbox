@@ -40,8 +40,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Configure pip to use Aliyun mirror
-RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
 
 # Install Node.js 20.x
 RUN mkdir -p /etc/apt/keyrings && \
@@ -97,20 +96,33 @@ RUN mkdir -p /etc/supervisor/conf.d
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY Caddyfile /etc/caddy/Caddyfile
 
+# Create directories and set ownership before switching user
+RUN mkdir -p /app /workspace && chown -R ubuntu:ubuntu /app /workspace
+
+# ============================================================================
+# >>>  SWITCH TO UBUNTU USER  <<<
+# >>>  All user-level configs (pip packages, caches, dotfiles) go here  <<<
+# ============================================================================
+USER ubuntu
 WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Configure pip mirror for ubuntu user
+RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
-# Install Playwright browser for headless automation
+# Install Python dependencies (installed to ~/.local)
+COPY --chown=ubuntu:ubuntu requirements.txt .
+RUN pip3 install --user --no-cache-dir -r requirements.txt
+
+# Add user local bin to PATH
+ENV PATH="/home/ubuntu/.local/bin:${PATH}"
+
+# Install Playwright browser (installed to ~/.cache/ms-playwright)
 RUN playwright install chromium --with-deps
 
-# Create workspace directory for user volume mounting
-RUN mkdir -p /workspace && chown -R ubuntu:ubuntu /workspace
-
-# Set ownership for ubuntu user
-RUN chown -R ubuntu:ubuntu /app
+# ============================================================================
+# >>>  END OF UBUNTU USER SETUP, SWITCH BACK TO ROOT  <<<
+# ============================================================================
+USER root
 
 # Declare volumes (optional mounting, works without mounting too)
 VOLUME /home/ubuntu
