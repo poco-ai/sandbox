@@ -41,16 +41,38 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=full-sha-
+            type=raw,value=full,enable={{is_default_branch}}
+
+      - name: Extract metadata (lite)
+        id: meta_lite
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=lite-sha-
+            type=raw,value=lite,enable={{is_default_branch}}
 
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: ./docker
           file: docker/Dockerfile
+          target: full
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push (lite)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docker
+          file: docker/Dockerfile
+          target: lite
+          push: true
+          tags: ${{ steps.meta_lite.outputs.tags }}
+          labels: ${{ steps.meta_lite.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

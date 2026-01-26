@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -7,7 +7,7 @@ RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu
     sed -i 's|http://security.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu/|g' /etc/apt/sources.list && \
     sed -i 's|http://ports.ubuntu.com/ubuntu-ports/|http://mirrors.aliyun.com/ubuntu-ports/|g' /etc/apt/sources.list
 
-# Update and install basic tools
+# Base OS tools (shared by full/lite)
 RUN apt-get update && apt-get install -y \
     sudo \
     curl \
@@ -17,15 +17,14 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     gnupg \
     software-properties-common \
-    xvfb \
-    x11vnc \
-    openbox \
-    xterm \
-    novnc \
-    websockify \
-    supervisor \
     apt-transport-https \
+    locales \
+    && locale-gen zh_CN.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=zh_CN.UTF-8 \
+    LANGUAGE=zh_CN:zh \
+    LC_ALL=zh_CN.UTF-8
 
 # Create user ubuntu and grant sudo privileges
 RUN useradd -m -d /home/ubuntu -s /bin/bash ubuntu && \
@@ -39,8 +38,6 @@ RUN add-apt-repository ppa:deadsnakes/ppa && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-
 
 # Install Node.js 20.x
 RUN mkdir -p /etc/apt/keyrings && \
@@ -57,6 +54,37 @@ RUN npm config set registry https://registry.npmmirror.com
 # Install global npm packages
 RUN npm install -g typescript ts-node pnpm yarn
 
+# Create directories and set ownership
+RUN mkdir -p /app /workspace && chown -R ubuntu:ubuntu /app /workspace
+
+ENV PATH="/home/ubuntu/.local/bin:${PATH}"
+WORKDIR /app
+
+# -----------------------------------------------------------------------------
+# Lite image (no desktop/browser)
+# -----------------------------------------------------------------------------
+FROM base AS lite
+
+USER ubuntu
+RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+COPY --chown=ubuntu:ubuntu requirements.txt .
+RUN pip3 install --user --no-cache-dir -r requirements.txt
+
+VOLUME /home/ubuntu
+VOLUME /workspace
+
+CMD ["sleep", "infinity"]
+
+# -----------------------------------------------------------------------------
+# Full image (desktop + browser)
+# -----------------------------------------------------------------------------
+FROM base AS full
+
+# Services used by the full sandbox image
+RUN apt-get update && apt-get install -y \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install Caddy
 RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /etc/apt/keyrings/caddy-stable-archive-keyring.gpg \
     && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list \
@@ -65,7 +93,22 @@ RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --de
     && apt-get install -y caddy \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
+# Install code-server
+RUN curl -fsSL https://code-server.dev/install.sh | sh
+
+RUN mkdir -p /etc/supervisor/conf.d /etc/caddy
+
+# Desktop / VNC / noVNC tooling
+RUN apt-get update && apt-get install -y \
+    xvfb \
+    x11vnc \
+    openbox \
+    xterm \
+    novnc \
+    websockify \
+    && rm -rf /var/lib/apt/lists/*
+
+# Google Chrome
 RUN wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /etc/apt/keyrings/google-chrome.gpg \
     && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
@@ -74,57 +117,27 @@ RUN wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor 
 
 ENV DISPLAY=:1
 
-# Install Chinese fonts and language support
+# Chinese fonts and common multimedia tooling (used by some Python packages)
 RUN apt-get update && apt-get install -y \
     fonts-noto-cjk \
     fonts-noto-color-emoji \
     language-pack-zh-hans \
-    locales \
     ffmpeg \
-    && locale-gen zh_CN.UTF-8 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ENV LANG=zh_CN.UTF-8 \
-    LANGUAGE=zh_CN:zh \
-    LC_ALL=zh_CN.UTF-8
-
-# Install code-server
-RUN curl -fsSL https://code-server.dev/install.sh | sh
-
-RUN mkdir -p /etc/supervisor/conf.d
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY Caddyfile /etc/caddy/Caddyfile
 
-# Create directories and set ownership before switching user
-RUN mkdir -p /app /workspace && chown -R ubuntu:ubuntu /app /workspace
-
-# ============================================================================
-# >>>  SWITCH TO UBUNTU USER  <<<
-# >>>  All user-level configs (pip packages, caches, dotfiles) go here  <<<
-# ============================================================================
 USER ubuntu
-WORKDIR /app
-
-# Configure pip mirror for ubuntu user
 RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
-
-# Install Python dependencies (installed to ~/.local)
 COPY --chown=ubuntu:ubuntu requirements.txt .
 RUN pip3 install --user --no-cache-dir -r requirements.txt
-
-# Add user local bin to PATH
-ENV PATH="/home/ubuntu/.local/bin:${PATH}"
 
 # Install Playwright browser (installed to ~/.cache/ms-playwright)
 RUN playwright install chromium --with-deps
 
-# ============================================================================
-# >>>  END OF UBUNTU USER SETUP, SWITCH BACK TO ROOT  <<<
-# ============================================================================
 USER root
-
-# Declare volumes (optional mounting, works without mounting too)
 VOLUME /home/ubuntu
 VOLUME /workspace
 
