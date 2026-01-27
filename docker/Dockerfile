@@ -70,7 +70,6 @@ RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 COPY --chown=ubuntu:ubuntu requirements.txt .
 RUN pip3 install --user --no-cache-dir -r requirements.txt
 
-VOLUME /home/ubuntu
 VOLUME /workspace
 
 CMD ["sleep", "infinity"]
@@ -138,7 +137,6 @@ RUN pip3 install --user --no-cache-dir -r requirements.txt
 RUN playwright install chromium --with-deps
 
 USER root
-VOLUME /home/ubuntu
 VOLUME /workspace
 
 EXPOSE 8080
