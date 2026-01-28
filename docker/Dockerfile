@@ -66,6 +66,9 @@ WORKDIR /app
 FROM base AS lite
 
 USER ubuntu
+RUN mkdir -p /home/ubuntu/.npm-global
+ENV NPM_CONFIG_PREFIX=/home/ubuntu/.npm-global
+ENV PATH="/home/ubuntu/.npm-global/bin:${PATH}"
 RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 COPY --chown=ubuntu:ubuntu requirements.txt .
 RUN pip3 install --user --no-cache-dir -r requirements.txt
@@ -129,6 +132,9 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY Caddyfile /etc/caddy/Caddyfile
 
 USER ubuntu
+RUN mkdir -p /home/ubuntu/.npm-global
+ENV NPM_CONFIG_PREFIX=/home/ubuntu/.npm-global
+ENV PATH="/home/ubuntu/.npm-global/bin:${PATH}"
 RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 COPY --chown=ubuntu:ubuntu requirements.txt .
 RUN pip3 install --user --no-cache-dir -r requirements.txt
