@@ -106,9 +106,14 @@ RUN apt-get update && apt-get install -y \
     x11vnc \
     openbox \
     xterm \
-    novnc \
     websockify \
     && rm -rf /var/lib/apt/lists/*
+
+# Install noVNC from source (latest stable version)
+RUN cd /tmp && \
+    wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.6.0.tar.gz | tar xzf - && \
+    mv noVNC-1.6.0 /usr/share/novnc && \
+    rm -rf /tmp/noVNC-1.6.0.tar.gz
 
 # Google Chrome
 RUN wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /etc/apt/keyrings/google-chrome.gpg \
