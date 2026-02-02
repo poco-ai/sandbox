@@ -69,6 +69,8 @@ USER ubuntu
 RUN mkdir -p /home/ubuntu/.npm-global
 ENV NPM_CONFIG_PREFIX=/home/ubuntu/.npm-global
 ENV PATH="/home/ubuntu/.npm-global/bin:${PATH}"
+# Initialize npm global directory structure by installing a minimal package
+RUN npm install -g --no-save npm@latest
 RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 COPY --chown=ubuntu:ubuntu requirements.txt .
 RUN pip3 install --user --no-cache-dir -r requirements.txt
@@ -140,6 +142,8 @@ USER ubuntu
 RUN mkdir -p /home/ubuntu/.npm-global
 ENV NPM_CONFIG_PREFIX=/home/ubuntu/.npm-global
 ENV PATH="/home/ubuntu/.npm-global/bin:${PATH}"
+# Initialize npm global directory structure by installing a minimal package
+RUN npm install -g --no-save npm@latest
 RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 COPY --chown=ubuntu:ubuntu requirements.txt .
 RUN pip3 install --user --no-cache-dir -r requirements.txt
