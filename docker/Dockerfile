@@ -1,11 +1,6 @@
-FROM ubuntu:22.04 AS base
+FROM debian:12 AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Configure apt source to use Aliyun mirror
-RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu/|g' /etc/apt/sources.list && \
-    sed -i 's|http://security.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu/|g' /etc/apt/sources.list && \
-    sed -i 's|http://ports.ubuntu.com/ubuntu-ports/|http://mirrors.aliyun.com/ubuntu-ports/|g' /etc/apt/sources.list
 
 # Base OS tools (shared by full/lite)
 RUN apt-get update && apt-get install -y \
@@ -17,7 +12,6 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     gnupg \
     software-properties-common \
-    apt-transport-https \
     locales \
     && locale-gen zh_CN.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
@@ -30,12 +24,9 @@ ENV LANG=zh_CN.UTF-8 \
 RUN useradd -m -d /home/ubuntu -s /bin/bash ubuntu && \
     echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu
 
-# Install Python 3.10 from deadsnakes PPA
-RUN add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y python3.10 python3.10-venv python3.10-dev python3-pip && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 && \
+# Install Python (Debian default, currently 3.11)
+RUN apt-get update && \
+    apt-get install -y python3 python3-venv python3-dev python3-pip python-is-python3 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -47,9 +38,6 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get install -y nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-# Configure npm to use Aliyun mirror
-RUN npm config set registry https://registry.npmmirror.com
 
 # Install global npm packages
 RUN npm install -g typescript ts-node pnpm yarn
@@ -71,7 +59,6 @@ ENV NPM_CONFIG_PREFIX=/home/ubuntu/.npm-global
 ENV PATH="/home/ubuntu/.npm-global/bin:${PATH}"
 # Initialize npm global directory structure by installing a minimal package
 RUN npm install -g --no-save npm@latest
-RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 COPY --chown=ubuntu:ubuntu requirements.txt .
 RUN pip3 install --user --no-cache-dir -r requirements.txt
 
@@ -119,7 +106,7 @@ RUN cd /tmp && \
 
 # Install Chromium browser (supports both amd64 and arm64)
 RUN apt-get update && apt-get install -y \
-    chromium-browser \
+    chromium \
     && rm -rf /var/lib/apt/lists/*
 
 ENV DISPLAY=:1
@@ -128,7 +115,6 @@ ENV DISPLAY=:1
 RUN apt-get update && apt-get install -y \
     fonts-noto-cjk \
     fonts-noto-color-emoji \
-    language-pack-zh-hans \
     ffmpeg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -142,7 +128,6 @@ ENV NPM_CONFIG_PREFIX=/home/ubuntu/.npm-global
 ENV PATH="/home/ubuntu/.npm-global/bin:${PATH}"
 # Initialize npm global directory structure by installing a minimal package
 RUN npm install -g --no-save npm@latest
-RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 COPY --chown=ubuntu:ubuntu requirements.txt .
 RUN pip3 install --user --no-cache-dir -r requirements.txt
 
