@@ -117,11 +117,9 @@ RUN cd /tmp && \
     mv noVNC-1.6.0 /usr/share/novnc && \
     rm -rf /tmp/noVNC-1.6.0.tar.gz
 
-# Google Chrome
-RUN wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /etc/apt/keyrings/google-chrome.gpg \
-    && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
+# Install Chromium browser (supports both amd64 and arm64)
+RUN apt-get update && apt-get install -y \
+    chromium-browser \
     && rm -rf /var/lib/apt/lists/*
 
 ENV DISPLAY=:1
