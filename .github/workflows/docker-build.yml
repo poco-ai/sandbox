@@ -20,6 +20,16 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: full
+            tag_prefix: full-sha-
+            raw_tag: full
+          - target: lite
+            tag_prefix: lite-sha-
+            raw_tag: lite
 
     steps:
       - name: Checkout repository
@@ -44,40 +54,18 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,prefix=full-sha-
-            type=raw,value=full,enable={{is_default_branch}}
-
-      - name: Extract metadata (lite)
-        id: meta_lite
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=lite-sha-
-            type=raw,value=lite,enable={{is_default_branch}}
+            type=sha,prefix=${{ matrix.tag_prefix }}
+            type=raw,value=${{ matrix.raw_tag }},enable={{is_default_branch}}
 
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: ./docker
           file: docker/Dockerfile
-          target: full
+          target: ${{ matrix.target }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push (lite)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./docker
-          file: docker/Dockerfile
-          target: lite
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta_lite.outputs.tags }}
-          labels: ${{ steps.meta_lite.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
