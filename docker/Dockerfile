@@ -139,8 +139,8 @@ RUN npm install -g --no-save npm@latest
 COPY --chown=ubuntu:ubuntu requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browser (installed to ~/.cache/ms-playwright)
-RUN playwright install chromium --with-deps
+# Use system Chromium via CDP instead of Playwright's bundled browser
+ENV PLAYWRIGHT_BROWSERS_PATH=0
 
 USER root
 VOLUME /workspace
