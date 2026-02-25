@@ -12,13 +12,11 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     gnupg \
     software-properties-common \
-    locales \
-    && locale-gen zh_CN.UTF-8 \
+    locales-all \
     && rm -rf /var/lib/apt/lists/*
 
-ENV LANG=zh_CN.UTF-8 \
-    LANGUAGE=zh_CN:zh \
-    LC_ALL=zh_CN.UTF-8
+ENV LANG=zh_CN.utf8 \
+    LANGUAGE=zh_CN:zh
 
 # Create user ubuntu and grant sudo privileges
 RUN useradd -m -d /home/ubuntu -s /bin/bash ubuntu && \
