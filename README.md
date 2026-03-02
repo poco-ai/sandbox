@@ -9,7 +9,7 @@ This project is inspired by [AIO Sandbox](https://github.com/agent-infra/sandbox
 We provide two build targets in a single Dockerfile:
 
 - `full` (default): desktop + VNC/noVNC + Chromium + Playwright
-- `lite`: only Python + Node.js (smaller image), no desktop/browser/code-server services
+- `lite`: only Python + Node.js (smaller image), no desktop/browser services
 
 Published image tags:
 

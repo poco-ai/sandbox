@@ -90,9 +90,6 @@ RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --de
     && apt-get install -y caddy \
     && rm -rf /var/lib/apt/lists/*
 
-# Install code-server
-RUN curl -fsSL https://code-server.dev/install.sh | sh
-
 RUN mkdir -p /etc/supervisor/conf.d /etc/caddy
 
 # Desktop / VNC / noVNC tooling
